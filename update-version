@@ -1,0 +1,11 @@
+#!/bin/sh
+VERSION_FILE="src/version.h"
+GIT_VERSION=$(git describe --long  | sed s/-/./ | sed s/"-g"/-/g)
+VERSION_NUM=$(echo $GIT_VERSION | cut -d"-" -f1)
+VERSION_SHA=$(echo $GIT_VERSION | cut -d"-" -f2 | sed 's/\(.*\)/\U\1/')
+
+echo "#ifndef VERSION_H" > $VERSION_FILE
+echo "#define VERSION_H" >> $VERSION_FILE
+echo "#define VERSION_NUM \"$VERSION_NUM\"" >> $VERSION_FILE
+echo "#define VERSION_SHA \"$VERSION_SHA\"" >> $VERSION_FILE
+echo "#endif" >> $VERSION_FILE

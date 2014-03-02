@@ -84,3 +84,19 @@ bool queue_dequeue(struct queue * queue, void * data)
     queue->count--;
     return true;
 }
+
+void * queue_peek_at(struct queue * queue, uint16_t index)
+{
+    void * ptr;
+
+    if(!queue) {
+        return NULL;
+    }
+
+    if(queue->count == 0) {
+        return NULL;
+    }
+
+    ptr = queue->data + (index * queue->element_size);
+    return ptr;
+}

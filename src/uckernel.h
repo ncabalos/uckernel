@@ -19,7 +19,8 @@ typedef struct uckernel_event_s {
 bool uckernel_task_register(uckernel_task func, uckernel_event * event_queue,
                             uint16_t event_queue_size, uint16_t priority);
 void uckernel_event_loop(void);
-bool uckernel_post_event(const uckernel_task func, uint16_t event, void * data);
+bool uckernel_post_event(const uckernel_task func, uint16_t event, void * data,
+                         uint16_t delay_ms);
 
 #endif	/* UCKERNEL_H */
 

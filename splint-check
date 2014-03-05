@@ -1,2 +1,2 @@
 #!/bin//sh
-splint -weak ./src/*.c
+splint -mayaliasunique -I"/opt/microchip/xc16/v1.20/support/PIC24F/h" -D_ISR= -unrecog ./src/*.c

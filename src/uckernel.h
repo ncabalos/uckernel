@@ -1,8 +1,6 @@
 #ifndef UCKERNEL_H
 #define	UCKERNEL_H
 
-#define UCKERNEL_TASKNAME_SIZE 20
-
 enum {
     UCKERNEL_TASK_PRIORITY_HIGH,
     UCKERNEL_TASK_PRIORITY_MED,
@@ -24,6 +22,7 @@ bool uckernel_post_event(const uckernel_task func, uint16_t event, void * data,
 bool uckernel_task_register(char * task_name, uckernel_task func,
                             uckernel_event * event_queue,
                             uint16_t event_queue_size, uint16_t priority);
+void uckernel_tick_handler(void);
 
 #endif	/* UCKERNEL_H */
 

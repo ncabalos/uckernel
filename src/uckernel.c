@@ -5,10 +5,8 @@
 #include <stdint.h>
 
 #include "queue.h"
+#include "uckernel_config.h"
 #include "uckernel.h"
-
-#define TASK_QUEUE_SIZE 5
-#define DELAYED_EVENT_LIST_SIZE 5
 
 struct delayed_event {
     bool in_use;
@@ -25,10 +23,10 @@ struct task_control_block {
 };
 
 static struct task_control_block
-        tasks[UCKERNEL_TASK_PRIORITY_COUNT * TASK_QUEUE_SIZE];
+        tasks[UCKERNEL_TASK_PRIORITY_COUNT * UCKERNEL_TASK_QUEUE_SIZE];
 
 static uint16_t delayed_event_count = 0;
-static struct delayed_event delayed_event_list[DELAYED_EVENT_LIST_SIZE];
+static struct delayed_event delayed_event_list[UCKERNEL_DELAYED_EVENT_LIST_SIZE];
 static uckernel_event event_queue_update_delay_task[1];
 static void uckernel_update_delay_task(const uint16_t event, void * data)
 {
@@ -39,7 +37,7 @@ static void uckernel_update_delay_task(const uint16_t event, void * data)
         return;
     }
 
-    for (i = 0; i < DELAYED_EVENT_LIST_SIZE; i++) {
+    for (i = 0; i < UCKERNEL_DELAYED_EVENT_LIST_SIZE; i++) {
         d_event = &delayed_event_list[i];
 
         if (d_event->in_use == true) {
@@ -85,8 +83,8 @@ bool uckernel_task_register(char * task_name, uckernel_task func,
         return false;
     }
 
-    for(i = 0; i < TASK_QUEUE_SIZE; i++) {
-        tcb_ptr = (struct task_control_block *) (tasks + (priority * TASK_QUEUE_SIZE +
+    for(i = 0; i < UCKERNEL_TASK_QUEUE_SIZE; i++) {
+        tcb_ptr = (struct task_control_block *) (tasks + (priority * UCKERNEL_TASK_QUEUE_SIZE +
                   i));
 
         if(tcb_ptr->func == NULL) {
@@ -106,7 +104,7 @@ void uckernel_event_loop(void)
     uckernel_event pending_event;
     uint16_t i;
 
-    for(i = 0; i < (uint16_t) UCKERNEL_TASK_PRIORITY_COUNT * TASK_QUEUE_SIZE;
+    for(i = 0; i < (uint16_t) UCKERNEL_TASK_PRIORITY_COUNT * UCKERNEL_TASK_QUEUE_SIZE;
         i++) {
         tcb_ptr = (struct task_control_block *)(tasks + i);
 
@@ -140,7 +138,7 @@ static bool tcb_post_delayed_event(struct task_control_block * tcb,
         return false;
     }
 
-    for(i = 0; i < DELAYED_EVENT_LIST_SIZE; i++) {
+    for(i = 0; i < UCKERNEL_DELAYED_EVENT_LIST_SIZE; i++) {
         d_event = &delayed_event_list[i];
 
         if(d_event->in_use == false) {
@@ -185,7 +183,7 @@ static struct task_control_block * get_tcb(uckernel_task func)
         return NULL;
     }
 
-    for(i = 0; i < (uint16_t)UCKERNEL_TASK_PRIORITY_COUNT * TASK_QUEUE_SIZE;
+    for(i = 0; i < (uint16_t)UCKERNEL_TASK_PRIORITY_COUNT * UCKERNEL_TASK_QUEUE_SIZE;
         i++) {
         tcb_ptr = (struct task_control_block *)(tasks + i);
 
@@ -218,10 +216,5 @@ bool uckernel_post_event(const uckernel_task func, uint16_t event,
 
 void uckernel_tick_handler(void)
 {
-    bool result;
-    result = uckernel_post_event(uckernel_update_delay_task, NULL, NULL, 0);
-
-    if(result == false) {
-        ;
-    }
+    uckernel_post_event(uckernel_update_delay_task, NULL, NULL, 0);
 }

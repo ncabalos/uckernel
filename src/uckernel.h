@@ -18,7 +18,7 @@ typedef struct uckernel_event_s {
 /**
  * This initializes the uckernel and sets up the required resources. The system
  * tick timer must be initialized before this function is called.
- * 
+ *
  * @return true = success; false = failed
  */
 bool uckernel_init(void);

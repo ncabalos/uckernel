@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "version.h"
+
 #include "queue.h"
 #include "uckernel_config.h"
 #include "uckernel.h"
@@ -22,6 +24,17 @@ struct task_control_block {
     bool pending;
 };
 
+struct uckernel_info_block {
+    char version_string[10];
+    char sha_string[8];
+    uint16_t task_count;
+    uint16_t delayed_task_count;
+    uint16_t post_event_count;
+    uint16_t post_event_failure;
+};
+
+static struct uckernel_info_block uckernel_info_block;
+
 static struct task_control_block
         tasks[UCKERNEL_TASK_PRIORITY_COUNT * UCKERNEL_TASK_QUEUE_SIZE];
 
@@ -33,6 +46,7 @@ static void uckernel_update_delay_task(const uint16_t event, void * data)
 {
     struct delayed_event * d_event;
     uint16_t i;
+    bool result;
 
     if(delayed_event_count == 0) {
         return;
@@ -48,13 +62,16 @@ static void uckernel_update_delay_task(const uint16_t event, void * data)
 
             if (d_event->delay_ms == 0) {
                 /* Put in event loop */
-                if(uckernel_post_event(d_event->func, d_event->event.event,
-                                       d_event->event.data, 0) == true) {
+                result = uckernel_post_event(d_event->func, d_event->event.event,
+                                             d_event->event.data, 0);
+
+                if(result == true) {
                     d_event->in_use = false;
                     d_event->delay_ms = 0;
                     d_event->event.event = 0;
                     d_event->event.data = NULL;
                     delayed_event_count--;
+                    uckernel_info_block.delayed_task_count--;
                 }
             }
         }
@@ -66,6 +83,12 @@ static void uckernel_update_delay_task(const uint16_t event, void * data)
 bool uckernel_init(void)
 {
     bool result;
+    strcpy(uckernel_info_block.version_string, VERSION_NUM);
+    strcpy(uckernel_info_block.sha_string, VERSION_SHA);
+    uckernel_info_block.task_count = 0;
+    uckernel_info_block.delayed_task_count = 0;
+    uckernel_info_block.post_event_count = 0;
+    uckernel_info_block.post_event_failure = 0;
     result = uckernel_task_register("uckernel_tick", uckernel_update_delay_task,
                                     event_queue_update_delay_task,
                                     sizeof(event_queue_update_delay_task),
@@ -78,6 +101,7 @@ bool uckernel_task_register(char * task_name, uckernel_task func,
                             uint16_t event_queue_size, uint16_t priority)
 {
     uint16_t i;
+    bool result;
     struct task_control_block * tcb_ptr;
 
     if(priority >= UCKERNEL_TASK_PRIORITY_COUNT) {
@@ -86,14 +110,19 @@ bool uckernel_task_register(char * task_name, uckernel_task func,
 
     for(i = 0; i < UCKERNEL_TASK_QUEUE_SIZE; i++) {
         tcb_ptr = (struct task_control_block *) (tasks + (priority *
-                  UCKERNEL_TASK_QUEUE_SIZE +
-                  i));
+                  UCKERNEL_TASK_QUEUE_SIZE + i));
 
         if(tcb_ptr->func == NULL) {
             tcb_ptr->func = func;
             strcpy(tcb_ptr->task_name, task_name);
-            return queue_register(&tcb_ptr->event_q, (void *) event_queue,
-                                  event_queue_size, sizeof(uckernel_event));
+            result = queue_register(&tcb_ptr->event_q, (void *) event_queue,
+                                    event_queue_size, sizeof(uckernel_event));
+
+            if(result == true) {
+                uckernel_info_block.task_count++;
+            }
+
+            return result;
         }
     }
 
@@ -161,6 +190,7 @@ static bool tcb_post_delayed_event(struct task_control_block * tcb,
 static bool tcb_post_event(struct task_control_block * tcb, uint16_t event,
                            void * data, uint16_t delay_ms)
 {
+    bool result;
     uckernel_event tcb_event;
 
     if(tcb == NULL) {
@@ -170,10 +200,21 @@ static bool tcb_post_event(struct task_control_block * tcb, uint16_t event,
     if (delay_ms == 0) {
         tcb_event.event = event;
         tcb_event.data = data;
-        return queue_enqueue(&tcb->event_q, &tcb_event);
+        uckernel_info_block.post_event_count++;
+        result = queue_enqueue(&tcb->event_q, &tcb_event);
+
+        if(result == false) {
+            uckernel_info_block.post_event_failure++;
+        }
     } else {
-        return tcb_post_delayed_event(tcb, &tcb_event, delay_ms);
+        result = tcb_post_delayed_event(tcb, &tcb_event, delay_ms);
+
+        if(result == true) {
+            uckernel_info_block.delayed_task_count++;
+        }
     }
+
+    return result;
 }
 
 static struct task_control_block * get_tcb(uckernel_task func)

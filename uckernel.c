@@ -7,7 +7,7 @@
 #include "version.h"
 
 #include "queue.h"
-#include "uckernel_config.h"
+#include "../uckernel_config.h"
 #include "uckernel.h"
 
 struct delayed_event {

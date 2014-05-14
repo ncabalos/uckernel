@@ -1,5 +1,3 @@
 build/
 dist/
-nbproject/Makefile-*
-nbproject/Package-default.bash
-nbproject/private
+version.h

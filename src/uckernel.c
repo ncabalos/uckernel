@@ -80,15 +80,22 @@ static void uckernel_update_delay_task(const uint16_t event, void * data)
     return;
 }
 
-bool uckernel_init(void)
+static void reset_uckernel_info_block(void)
 {
-    bool result;
     strcpy(uckernel_info_block.version_string, VERSION_NUM);
     strcpy(uckernel_info_block.sha_string, VERSION_SHA);
     uckernel_info_block.task_count = 0;
     uckernel_info_block.delayed_task_count = 0;
     uckernel_info_block.post_event_count = 0;
     uckernel_info_block.post_event_failure = 0;
+}
+
+bool uckernel_init(void)
+{
+    bool result;
+
+    reset_uckernel_info_block();
+
     result = uckernel_task_register("uckernel_tick", uckernel_update_delay_task,
                                     event_queue_update_delay_task,
                                     sizeof(event_queue_update_delay_task),

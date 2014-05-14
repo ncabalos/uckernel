@@ -31,6 +31,7 @@ bool queue_register(struct queue * queue, void * data, uint16_t size,
     queue->out = 0;
     return true;
 }
+
 bool queue_enqueue(struct queue * queue, void * data)
 {
     void * ptr;

@@ -1,6 +1,8 @@
 #ifndef QUEUE_H
 #define	QUEUE_H
 
+#include <stdbool.h>
+
 struct queue {
     void * data;
     uint16_t size;

@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   assert.h
  * Author: Nathaniel Abalos
  *
@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#ifdef __DEBUG 
+#ifdef __DEBUG
 /*
  * For PIC24F repeat the halt instruction 2 times to ensure it stops,
  * avoiding the idiotic lame "breakpoint skidding" issue...

@@ -93,9 +93,7 @@ static void reset_uckernel_info_block(void)
 bool uckernel_init(void)
 {
     bool result;
-
     reset_uckernel_info_block();
-
     result = uckernel_task_register("uckernel_tick", uckernel_update_delay_task,
                                     event_queue_update_delay_task,
                                     sizeof(event_queue_update_delay_task),

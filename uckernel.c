@@ -6,7 +6,7 @@
 
 #include "version.h"
 
-#include "queue.h"
+#include "../queue.h"
 #include "../uckernel_config.h"
 #include "uckernel.h"
 
@@ -226,7 +226,7 @@ static struct task_control_block * get_tcb(uckernel_task func)
 {
     struct task_control_block * tcb_ptr;
     uint16_t i;
-    //tcb_ptr = NULL;
+    /* tcb_ptr = NULL; */
 
     if(func == NULL) {
         return NULL;

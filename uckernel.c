@@ -31,8 +31,10 @@ struct uckernel_info_block {
     uint16_t delayed_task_count;
     uint16_t post_event_count;
     uint16_t post_event_failure;
+	uint16_t tasks_checksum;
 };
 
+/* Variable declarations */
 static struct uckernel_info_block uckernel_info_block;
 
 static struct task_control_block
@@ -41,6 +43,10 @@ static struct task_control_block
 static uint16_t delayed_event_count = 0;
 static struct delayed_event
         delayed_event_list[UCKERNEL_DELAYED_EVENT_LIST_SIZE];
+
+/* Function prototypes */		
+static bool uckernel_validate_tasks(void);
+
 static uckernel_event event_queue_update_delay_task[1];
 static void uckernel_update_delay_task(const uint16_t event, void * data)
 {
@@ -88,6 +94,7 @@ static void reset_uckernel_info_block(void)
     uckernel_info_block.delayed_task_count = 0;
     uckernel_info_block.post_event_count = 0;
     uckernel_info_block.post_event_failure = 0;
+	uckernel_info_block.tasks_checksum = 0;
 }
 
 bool uckernel_init(void)
@@ -125,6 +132,8 @@ bool uckernel_task_register(char * task_name, uckernel_task func,
 
             if(result == true) {
                 uckernel_info_block.task_count++;
+				/* update task checksum */
+				uckernel_info_block.tasks_checksum ^= (uint16_t)tcb_ptr->func;
             }
 
             return result;
@@ -134,11 +143,43 @@ bool uckernel_task_register(char * task_name, uckernel_task func,
     return false;
 }
 
+bool uckernel_validate_tasks(void)
+{
+	struct task_control_block * tcb_ptr;
+	uint16_t checksum;
+	uint16_t i;
+	
+	if(uckernel_info_block.tasks_checksum == 0){
+		return false;
+	}
+	
+	checksum = 0;
+	for(i = 0;
+        i < (uint16_t) UCKERNEL_TASK_PRIORITY_COUNT * UCKERNEL_TASK_QUEUE_SIZE;
+        i++) {
+		tcb_ptr = (struct task_control_block *)(tasks + i);
+		
+		checksum ^= (uint16_t)tcb_ptr->func;
+	}
+	
+	if((checksum ^ uckernel_info_block.tasks_checksum) == 0){
+		return true;
+	} else {
+		return false;
+	}
+}
+
 void uckernel_event_loop(void)
 {
     struct task_control_block * tcb_ptr;
     uckernel_event pending_event;
     uint16_t i;
+	
+#if 0	
+	if(uckernel_validate_tasks() == false) {
+		/* todo: trigger kernel fault here or attempt to recover */
+	}
+#endif
 
     for(i = 0;
         i < (uint16_t) UCKERNEL_TASK_PRIORITY_COUNT * UCKERNEL_TASK_QUEUE_SIZE;

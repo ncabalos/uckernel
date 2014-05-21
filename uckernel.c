@@ -174,13 +174,11 @@ void uckernel_event_loop(void)
     struct task_control_block * tcb_ptr;
     uckernel_event pending_event;
     uint16_t i;
-#if 0
 
     if(uckernel_validate_tasks() == false) {
         /* todo: trigger kernel fault here or attempt to recover */
+        ;
     }
-
-#endif
 
     for(i = 0;
         i < (uint16_t) UCKERNEL_TASK_PRIORITY_COUNT * UCKERNEL_TASK_QUEUE_SIZE;
